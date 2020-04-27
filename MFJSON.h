@@ -431,32 +431,28 @@ namespace MFJSON
 				s += len;
 
 			} while (len);
-			//return;
-			//do
-			////{
-			//	int nSubWritePos = m_write_pos%StringBlock::BLOCK_SIZE;
-			//	int nWriteIdx = m_write_pos / StringBlock::BLOCK_SIZE;
-			//	int nCanWriteSize;
-			//	if (nWriteIdx>=m_buff.size())
-			//	{
-			//		m_buff.push_back(new StringBlock());
-			//		nCanWriteSize = StringBlock::BLOCK_SIZE;
-			//	}
-			//	else
-			//	{
-			//		nCanWriteSize = StringBlock::BLOCK_SIZE - nSubWritePos;
-			//	}
-			//	int nWriteSize = len < nCanWriteSize ? len : nCanWriteSize;
-			//	char* pdst = m_buff[nWriteIdx]->get(nSubWritePos);
-			//	for (int i = 0; i < nWriteSize; i ++ )
-			//	{
-			//		pdst[i] = s[i];
-			//	}
-			//	//memcpy(m_buff[nWriteIdx]->get(nSubWritePos), s, nWriteSize);
-			//	s += nWriteSize;
-			//	len -= nWriteSize;
-			//	m_write_pos += nWriteSize;
-			////} while (len);
+			
+		}
+		inline void append(const char c)
+		{
+			m_size += 1;
+			char* lastblock;
+			
+			int nleftsize = StringBlock::BLOCK_SIZE - m_write_pos;
+			if (nleftsize == 0)
+			{
+				m_buff.push_back(new char[StringBlock::BLOCK_SIZE]);
+				m_write_pos = 0;
+				nleftsize = StringBlock::BLOCK_SIZE;
+				lastblock = m_buff.back();
+			}
+			else
+			{
+				lastblock = m_buff.back();
+
+			}
+			lastblock[m_write_pos] = c;//
+			m_write_pos++;
 
 		}
 
@@ -1957,7 +1953,28 @@ private:
 		case NT_STRING:
 		{
 			m_doc.m_string_builder.append("\"", 1);
-			m_doc.m_string_builder.append(getString(), (int)strlen(getString()));
+			auto *p = getString();
+			while (*p)
+			{
+				if (*p == '\t')
+					m_doc.m_string_builder.append("\\t", 2);
+				else if (*p == '\"')
+					m_doc.m_string_builder.append("\\\"", 2);
+				else if (*p == '\b')
+					m_doc.m_string_builder.append("\\b", 2);
+				else if (*p == '\f')
+					m_doc.m_string_builder.append("\\f", 2);
+				else if (*p == '\n')
+					m_doc.m_string_builder.append("\\n", 2);
+				else if (*p == '\r')
+					m_doc.m_string_builder.append("\\r", 2);
+				else if (*p == '\\')
+					m_doc.m_string_builder.append("\\\\", 2);
+				else
+					m_doc.m_string_builder.append(*p);
+				p++;
+			}
+			//m_doc.m_string_builder.append(getString(), (int)strlen(getString()));
 			m_doc.m_string_builder.append("\"", 1);
 
 		}

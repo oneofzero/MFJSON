@@ -131,6 +131,7 @@ int main()
 	printf("test MFJSON  begin!\n");
 	auto jsonstr = read_file_bytes("monster_attr.json");
 	//speed test
+	int accesscount = 1000;
 	{
 		using namespace rapidjson;
 		TimeDuration dt;
@@ -141,11 +142,11 @@ int main()
 		{
 			int maxhp;
 			TimeDuration dt;
-			for (int i = 0; i < 1000000; i++)
+			for (int i = 0; i < accesscount; i++)
 			{
 				maxhp = doc["6100"][6]["maxhp"].GetInt();
 			}
-			printf("rapidjson read value 1000000 used:%lldus\n", dt.duration());
+			printf("rapidjson read value %d used:%lldus\n", accesscount, dt.duration());
 
 		}
 
@@ -173,11 +174,11 @@ int main()
 			int maxhp;
 			TimeDuration dt;
 
-			for (int i = 0; i < 1000000; i++)
+			for (int i = 0; i < accesscount; i++)
 			{
 				maxhp = doc.root()["6100"][6]["maxhp"].getInt();
 			}
-			printf("MFJSON read value 1000000 used:%lldus\n", dt.duration());
+			printf("MFJSON read value %d used:%lldus\n", accesscount, dt.duration());
 
 		}
 
@@ -229,7 +230,7 @@ int main()
 			 element.mapBegin();
 			 element.mapPush("id").set(i);
 			 element.mapPush("level").set(2);
-			 element.mapPush("name").set("haha");
+			 element.mapPush("name").set("haha\nadsd");
 			 element.mapEnd();
 		}
 
