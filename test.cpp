@@ -6,7 +6,7 @@
 #endif
 
 #include "rapidjson/document.h"
-
+#include "simdjson.h"
 
 std::string read_file_bytes(const char* path)
 {
@@ -153,12 +153,14 @@ int main()
 	printf("test MFJSON  begin!\n");
 	auto jsonstr = read_file_bytes("monster_attr.json");
 	//speed test
-	int accesscount = 1000;
+	int accesscount = 1000000;
 	{
 		using namespace rapidjson;
 		TimeDuration dt;
 		Document doc;
 		doc.Parse(jsonstr.c_str());
+		//doc.ParseInsitu((char*)jsonstr.c_str());
+
 		if (doc.GetParseError() == RAPIDJSON_NAMESPACE::kParseErrorNone)
 		{
 			printf("rapidjson load ok! used:%lldus\n", dt.duration());
@@ -178,12 +180,33 @@ int main()
 		{
 			
 		}
+
 		
 
 
 
 	}
+	{
+		TimeDuration dt;
+		simdjson::dom::parser parser;
+		simdjson::dom::element doc = parser.parse(jsonstr.c_str(), jsonstr.length());
+		printf("simdjson load ok! used:%lldus\n", dt.duration());
 
+
+	/*	{
+			TimeDuration dt;
+
+			int maxhp;
+			TimeDuration dt;
+			for (int i = 0; i < accesscount; i++)
+			{
+				maxhp = doc.at("6100").at(6) ["maxhp"];
+			}
+			printf("simdjson read value %d used:%lldus\n", accesscount, dt.duration());
+
+		}*/
+
+	}
 	{
 		using namespace MFJSON;
 		Doc doc;

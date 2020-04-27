@@ -122,7 +122,7 @@ void read()
 		std::map<std::string, std::vector<MonsterAttr>> datas;
 		doc.loadTo(jsonstr.c_str(), datas);
 
-		testv = datas["1045"][0];
+		auto testv = datas["1045"][0];
 		printf("MFJSON obj load ok!    used:%lldus load:%d\n", dt.duration(), (int)datas.size());
 
 }
