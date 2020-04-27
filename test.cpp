@@ -152,92 +152,59 @@ int main()
 #endif
 	printf("test MFJSON  begin!\n");
 	auto jsonstr = read_file_bytes("monster_attr.json");
+	//auto jsonstr = read_file_bytes("twitter.json");
 	//speed test
+	int loadcount = 1;
+	
 	int accesscount = 1000000;
 	{
-		using namespace rapidjson;
 		TimeDuration dt;
-		Document doc;
-		doc.Parse(jsonstr.c_str());
-		//doc.ParseInsitu((char*)jsonstr.c_str());
 
-		if (doc.GetParseError() == RAPIDJSON_NAMESPACE::kParseErrorNone)
+	
+		for (int lc = 0; lc <loadcount; lc++)
 		{
-			printf("rapidjson load ok! used:%lldus\n", dt.duration());
+			using namespace rapidjson;
+			Document doc;
+			doc.Parse(jsonstr.c_str());
 
-			{
-				int maxhp;
-				TimeDuration dt;
-				for (int i = 0; i < accesscount; i++)
-				{
-					maxhp = doc["6100"][6]["maxhp"].GetInt();
-				}
-				printf("rapidjson read value %d used:%lldus\n", accesscount, dt.duration());
-
-			}
 		}
-		else
-		{
-			
-		}
-
-		
-
-
+		printf("rapidjson load ok! used:%lldus\n", dt.duration());
 
 	}
 	{
 		TimeDuration dt;
-		simdjson::dom::parser parser;
-		simdjson::dom::element doc = parser.parse(jsonstr.c_str(), jsonstr.length());
+
+		for (int lc = 0; lc < loadcount; lc++)
+		{
+			simdjson::dom::parser parser;
+			simdjson::dom::element doc = parser.parse(jsonstr.c_str(), jsonstr.length());
+		}
 		printf("simdjson load ok! used:%lldus\n", dt.duration());
 
-
-	/*	{
-			TimeDuration dt;
-
-			int maxhp;
-			TimeDuration dt;
-			for (int i = 0; i < accesscount; i++)
-			{
-				maxhp = doc.at("6100").at(6) ["maxhp"];
-			}
-			printf("simdjson read value %d used:%lldus\n", accesscount, dt.duration());
-
-		}*/
-
 	}
+
 	{
-		using namespace MFJSON;
-		Doc doc;
-		{
-			TimeDuration dt;
+		TimeDuration dt;
 
-			if (!doc.load(jsonstr.c_str()))
+		for (int lc = 0; lc < loadcount; lc++)
+		{
+			using namespace MFJSON;
+			Doc doc;
 			{
-				printf("%s\n", doc.errorDesc(jsonstr.c_str()).c_str());
+
+				if (!doc.load(jsonstr.c_str()))
+				{
+					printf("%s\n", doc.errorDesc(jsonstr.c_str()).c_str());
+				}
+
+
 			}
 
-			printf("MFJSON load ok!    used:%lldus\n", dt.duration());
-
 		}
-		//doc.load(jsonstr.c_str());
-
-		{
-			int maxhp;
-			TimeDuration dt;
-
-			for (int i = 0; i < accesscount; i++)
-			{
-				maxhp = doc.root()["6100"][6]["maxhp"].getInt();
-			}
-			printf("MFJSON read value %d used:%lldus\n", accesscount, dt.duration());
-
-		}
-
-
+		printf("MFJSON load ok!    used:%lldus\n", dt.duration());
 
 	}
+
 
 	//load c++ class
 	MonsterAttr testv;

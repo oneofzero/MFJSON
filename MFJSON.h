@@ -2451,7 +2451,7 @@ private:
 		if (len > SHORT_STRING_LEN)
 		{
 			
-			out = new char[len];
+			out = new char[len+1];
 			ls = addLongString(out);
 		}
 		else if (len < 8 && l8s)
