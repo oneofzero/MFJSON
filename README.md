@@ -120,7 +120,7 @@ void read()
 		TimeDuration dt;
 		Doc doc;
 		std::map<std::string, std::vector<MonsterAttr>> datas;
-		doc.load(jsonstr.c_str(), datas);
+		doc.loadTo(jsonstr.c_str(), datas);
 
 		testv = datas["1045"][0];
 		printf("MFJSON obj load ok!    used:%lldus load:%d\n", dt.duration(), (int)datas.size());

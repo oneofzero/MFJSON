@@ -73,6 +73,8 @@ struct EntityBase
 {
 	int id;
 	int level;
+	std::string name;
+
 };
 
 struct MinMax
@@ -99,6 +101,7 @@ struct MonsterAttr: public EntityBase
 MFJSON_ACCESSOR_VALUE_BEGIN(EntityBase)
 MFJSON_ACCESSOR_VALUE(id);
 MFJSON_ACCESSOR_VALUE(level);
+MFJSON_ACCESSOR_VALUE(name);
 MFJSON_ACCESSOR_VALUE_END()
 
 MFJSON_ACCESSOR_VALUE_BEGIN(MinMax)
@@ -195,11 +198,12 @@ int main()
 		Doc doc;
 		//doc.load(jsonstr.c_str());
 		std::map<std::string, std::vector<MonsterAttr>> datas;
-		doc.load(jsonstr.c_str(), datas);
+		doc.loadTo(jsonstr.c_str(), datas);
 
-		testv = datas["6100"][6];
+
 		printf("MFJSON obj load ok!    used:%lldus load:%d\n", dt.duration(), (int)datas.size());
 
+		testv = datas["6100"][6];
 	}
 	//save c++ class
 	{
@@ -213,6 +217,8 @@ int main()
 		values.push_back(testv);
 
 		doc.root().set(values);
+		values.clear();
+		doc.root().get(values);
 		std::string s = doc.dump(true);
 		printf("%s\n", s.c_str());
 	}

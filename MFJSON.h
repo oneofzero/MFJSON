@@ -556,7 +556,7 @@ namespace MFJSON
 
 		inline bool isNull() const
 		{
-			return m_node || m_node->m_Type == NT_NULL;
+			return !m_node || m_node->m_Type == NT_NULL;
 		}
 
 		inline bool isInt() const
@@ -1016,7 +1016,7 @@ private:
 		}
 
 		template<typename T>
-		bool load(const char* sUTF8, T& o)
+		bool loadTo(const char* sUTF8, T& o)
 		{			
 			m_pErrorPtr =  parse_generic(*this, sUTF8, o);
 			if (m_pErrorPtr)
@@ -2736,6 +2736,7 @@ private:
 		}
 	}
 
+
 	const char* parse_skip(Doc& doc, const char*& sUTF8);
 
 	template<typename T>
@@ -2752,7 +2753,8 @@ private:
 		}
 
 		virtual const char*  set(Doc& doc, T& o, const char*& sUTF8) = 0;
-		virtual void get(Accessor& acc, const T& o, const char* sKeyName) = 0;
+		virtual void get(Accessor& acc, const T& o) = 0;
+		virtual void set(Accessor& acc, T& o) = 0;
 
 		const char* m_sMemberName;
 	};
@@ -2773,9 +2775,15 @@ private:
 
 		}
 
-		virtual void get(Accessor& acc, const T& o, const char* sKeyName)
+		virtual void set(Accessor& acc, T& o)
 		{
-			acc.mapPush(sKeyName).set(o.*member_ptr);
+			acc.get(o.*member_ptr);
+			//o.*member_ptr = acc;
+		}
+
+		virtual void get(Accessor& acc, const T& o)
+		{
+			acc.mapPush(MemberAccessor<T>::m_sMemberName).set(o.*member_ptr);
 		}
 
 		MEMT T::*member_ptr;
@@ -2934,7 +2942,7 @@ private:
 			auto& instance = getInstance();
 			for (auto& kv : instance.m_executer)
 			{
-				kv.second->get(acc, o, kv.second->m_sMemberName);
+				kv.second->get(acc, o);
 			}
 		}
 
@@ -2944,6 +2952,17 @@ private:
 			acc.mapBegin();
 			fillMember(acc, o);
 			acc.mapEnd();
+		}
+
+		static void set(Accessor& acc, T& o)
+		{
+			auto& instance = getInstance();
+			for (auto& kv : instance.m_executer)
+			{
+				auto subacc = acc[kv.second->m_sMemberName];
+				if(!subacc.isNull())
+					kv.second->set(subacc, o);
+			}		
 		}
 	};
 
@@ -2978,6 +2997,18 @@ private:
 			
 			acc.mapEnd();
 
+		}
+
+		static void set(Accessor& acc, T& o)
+		{
+			SetterGetter<SuperT>::getInstance().set(acc, o);
+			auto& instance = getInstance();
+			for (auto& kv : instance.m_executer)
+			{
+				auto subacc = acc[kv.second->m_sMemberName];
+				if (!subacc.isNull())
+					kv.second->set(subacc, o);
+			}
 		}
 	};
 
@@ -3019,10 +3050,16 @@ namespace MFJSON\
 	template<class T>
 	void accessor_generic_setter(Accessor& acc, const T& val)
 	{
-		const char* sutf8hodler = NULL;
+		//const char* sutf8hodler = NULL;
 		SetterGetter<T>::get(acc, val);
 		//object_value_setter_getter(&acc, NULL, NULL,&val, sutf8hodler, NULL);
 	}
+	template<typename T>
+	inline void accessor_generic_getter(Accessor& acc, T& val)
+	{
+		SetterGetter<T>::set(acc, val);
+	}
+
 	
 	template<>
 	inline const char* parse_generic(Doc& doc, const char*& sUTF8, int& o)
