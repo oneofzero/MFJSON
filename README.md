@@ -200,6 +200,8 @@ MFJSON read value 1000000 used:499141us
 
 #### how to run test:
 
+git submodule update --init --recursive
+
 ##### windows: 
 
 visual studio open MFJSON.sln
