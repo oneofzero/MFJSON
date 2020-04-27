@@ -225,7 +225,7 @@ int main()
 
 		for (int i = 0; i < 2; i++)
 		{
-			 auto& element = doc.root().arrayPush();
+			 auto element = doc.root().arrayPush();
 			 element.mapBegin();
 			 element.mapPush("id").set(i);
 			 element.mapPush("level").set(2);

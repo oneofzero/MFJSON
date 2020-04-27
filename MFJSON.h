@@ -2747,7 +2747,7 @@ private:
 		MemberAccessorImp(const char* memberName, MEMT T::*ptr)
 			:member_ptr(ptr)
 		{
-			m_sMemberName = memberName;
+			MemberAccessor<T>::m_sMemberName = memberName;
 			//m_executer.insert(std::make_pair<std::string, SetterGetterExecuter<Value>*>("crit", &Value::crit));
 		}
 		virtual const char* set(Doc& doc, T& o, const char*& sUTF8)
@@ -2936,7 +2936,7 @@ private:
 	public:
 		static const char* set(Doc& doc, T& o, const char*& sUTF8, const String& nkey)
 		{
-			auto& instance = getInstance();
+			auto& instance = SetterGetterBase<T>::getInstance();
 			instance.m_pool = &doc.getStringPool();
 			auto it = instance.m_executer.find(nkey);
 			if (it != instance.m_executer.end())
@@ -2957,7 +2957,7 @@ private:
 			acc.mapBegin();
 
 			SetterGetter<SuperT>::getInstance().fillMember(acc, o);
-			fillMember(acc, o);
+			SetterGetterBase<T>::fillMember(acc, o);
 			
 			acc.mapEnd();
 
@@ -2976,7 +2976,7 @@ private:
 namespace MFJSON\
 	{\
 		template<>\
-		class SetterGetter<TYPE> : public SetterGetterBase<TYPE, __VA_ARGS__>\
+		class SetterGetter<TYPE> : public SetterGetterBase<TYPE, ##__VA_ARGS__ >\
 		{\
 		public:\
 			typedef TYPE OBJ_TYPE;\
