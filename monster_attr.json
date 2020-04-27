@@ -2,6 +2,7 @@
 	"1405":[
 		{
 			"name":"hehe",
+			"type":"NPC",
 			"crit":0.001,
 			"critdam":0.5,
 			"dodge":0,
@@ -1104,6 +1105,7 @@
 	],
 	"1406":[
 		{
+			"type":"PLAYER",
 			"crit":0.001,
 			"critdam":0.5,
 			"dodge":0,
@@ -2206,6 +2208,7 @@
 	],
 	"1407":[
 		{
+			"type":"MONSTER",
 			"crit":0.001,
 			"critdam":0.5,
 			"dodge":0,

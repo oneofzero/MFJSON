@@ -3002,7 +3002,7 @@ private:
 		static void set(Accessor& acc, T& o)
 		{
 			SetterGetter<SuperT>::getInstance().set(acc, o);
-			auto& instance = getInstance();
+			auto& instance = SetterGetterBase<T>::getInstance();
 			for (auto& kv : instance.m_executer)
 			{
 				auto subacc = acc[kv.second->m_sMemberName];
@@ -3037,6 +3037,123 @@ namespace MFJSON\
 	};}
 
 
+
+	template<typename T>
+	class EnumGetterSetterBase
+	{
+	public:
+		bool m_bUseStringValue;
+			
+
+		void set(Accessor& acc, const T& st)
+		{
+			if (!m_bUseStringValue)
+			{
+				acc.set((int)st);
+				return;
+			}
+			auto it = m_ValKeyMap.find(st);
+			if (it == m_ValKeyMap.end())
+				return;
+			acc.set(it->second);
+		}
+		void get(Accessor& acc, T& val)
+		{
+			if (!m_bUseStringValue)
+			{
+				val = (T)acc.getInt();
+				return;
+			}
+			auto it = m_KeyValMap.find(acc.getString());
+			if (it == m_KeyValMap.end())
+				return;
+			val = it->second;
+		}
+
+		const char* get(Doc& doc, const char*& sUTF8, T& val)
+		{
+			const char* pReturn;
+			if (m_bUseStringValue)
+			{
+				std::string sv;
+				pReturn = parse_generic(doc, sUTF8, sv);
+				auto it = m_KeyValMap.find(sv);
+				if (it != m_KeyValMap.end())
+				{
+					val = it->second;
+				}
+
+			}
+			else
+			{
+				int v;
+				pReturn = parse_generic(doc, sUTF8, v);
+				val = (T)v;
+			}
+
+			return pReturn;
+		}
+
+		void ToValKeyMap()
+		{
+			for (auto& kv : m_KeyValMap)
+			{
+				m_ValKeyMap.insert(std::make_pair(kv.second, kv.first.c_str()));
+			}
+		}
+
+		std::unordered_map<std::string, T> m_KeyValMap;
+		std::unordered_map<T, const char*> m_ValKeyMap;
+	};
+
+	template<typename T>
+	class EnumGetterSetter
+	{
+
+	};
+
+#define MFJSON_ACCESSOR_ENUM_BEGIN(TYPE) \
+namespace MFJSON\
+{\
+	template<>\
+	class EnumGetterSetter<TYPE> : public EnumGetterSetterBase<TYPE>\
+	{\
+	typedef TYPE ENUM_TYPE;\
+	public:\
+		EnumGetterSetter();\
+		static EnumGetterSetter<TYPE>& getInstance()\
+	{\
+		static EnumGetterSetter<TYPE> ins;\
+		return ins;\
+	}\
+	};\
+	inline void accessor_generic_setter(Accessor& acc, const TYPE& st)\
+	{\
+		EnumGetterSetter<TYPE>::getInstance().set(acc, st);\
+	}\
+	inline void accessor_generic_getter(Accessor& acc, TYPE& val)\
+	{\
+		EnumGetterSetter<TYPE>::getInstance().get(acc, val);\
+	}\
+	\
+	inline const char* parse_generic(Doc& doc, const char*& sUTF8, TYPE& val)\
+	{\
+		return EnumGetterSetter<TYPE>::getInstance().get(doc, sUTF8, val);\
+	}\
+	\
+	inline EnumGetterSetter<TYPE>::EnumGetterSetter()\
+	{\
+		EnumGetterSetterBase<TYPE>::m_bUseStringValue = true;
+
+#define MFJSON_ACCESSOR_ENUM(val) m_KeyValMap.insert(std::make_pair(#val, ENUM_TYPE::val));
+
+		
+#define MFJSON_ACCESSOR_ENUM_END() \
+		ToValKeyMap();\
+	}\
+}
+
+	
 	//template<typename T>
 	//const char*  object_value_setter_getter(Accessor* pAcc, MFJSON::Doc* pDoc, T* o, const T* co, const char*& sUTF8, const char* sKeyName);
 

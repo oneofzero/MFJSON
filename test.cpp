@@ -69,8 +69,18 @@ struct TimeDuration
 	unsigned long long t0;
 };
 
+
+enum EntityType
+{
+	NPC,
+	MONSTER,
+	PLAYER,
+};
+
+
 struct EntityBase
 {
+	EntityType type;
 	int id;
 	int level;
 	std::string name;
@@ -98,7 +108,14 @@ struct MonsterAttr: public EntityBase
 	int speed;
 };
 
+MFJSON_ACCESSOR_ENUM_BEGIN(EntityType)
+MFJSON_ACCESSOR_ENUM(NPC)
+MFJSON_ACCESSOR_ENUM(MONSTER)
+MFJSON_ACCESSOR_ENUM(PLAYER)
+MFJSON_ACCESSOR_ENUM_END()
+
 MFJSON_ACCESSOR_VALUE_BEGIN(EntityBase)
+MFJSON_ACCESSOR_VALUE(type);
 MFJSON_ACCESSOR_VALUE(id);
 MFJSON_ACCESSOR_VALUE(level);
 MFJSON_ACCESSOR_VALUE(name);
@@ -125,9 +142,11 @@ MFJSON_ACCESSOR_VALUE(run_away);
 MFJSON_ACCESSOR_VALUE(speed);
 MFJSON_ACCESSOR_VALUE_END()
 
+
+
 int main()
 {
-
+	bool b = std::is_enum<EntityType>();
 #ifdef WIN32
 	//::Sleep(2000);
 #endif
@@ -140,18 +159,26 @@ int main()
 		TimeDuration dt;
 		Document doc;
 		doc.Parse(jsonstr.c_str());
-		printf("rapidjson load ok! used:%lldus\n", dt.duration());
-
+		if (doc.GetParseError() == RAPIDJSON_NAMESPACE::kParseErrorNone)
 		{
-			int maxhp;
-			TimeDuration dt;
-			for (int i = 0; i < accesscount; i++)
-			{
-				maxhp = doc["6100"][6]["maxhp"].GetInt();
-			}
-			printf("rapidjson read value %d used:%lldus\n", accesscount, dt.duration());
+			printf("rapidjson load ok! used:%lldus\n", dt.duration());
 
+			{
+				int maxhp;
+				TimeDuration dt;
+				for (int i = 0; i < accesscount; i++)
+				{
+					maxhp = doc["6100"][6]["maxhp"].GetInt();
+				}
+				printf("rapidjson read value %d used:%lldus\n", accesscount, dt.duration());
+
+			}
 		}
+		else
+		{
+			
+		}
+		
 
 
 
