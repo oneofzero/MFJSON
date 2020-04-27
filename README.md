@@ -197,3 +197,14 @@ rapidjson read value 1000000 used:1061692us
 MFJSON load ok!    used:11508us
 
 MFJSON read value 1000000 used:499141us
+
+#### how to run test:
+
+##### windows: 
+
+visual studio open MFJSON.sln
+
+##### linux: 
+
+gcc test.cpp -I./rapidjson/include -lstdc++ -lm -o3 -DNDEBUG -o test
+
