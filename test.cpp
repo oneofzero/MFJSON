@@ -1,5 +1,5 @@
 #include "MFJSON.h"
-#ifndef WIN32
+#ifndef _MSC_VER
 #include <sys/time.h>
 #else
 #include <windows.h>
@@ -21,7 +21,7 @@ std::string read_file_bytes(const char* path)
 	std::string s;
 	s.resize(len);
 	fseek(fp,0, SEEK_SET);
-	len = fread(&s[0], 1, len ,fp);
+	len = (int)fread(&s[0], 1, len ,fp);
 	s.resize(len);
 	fclose(fp);
 	return s;
@@ -68,76 +68,178 @@ struct TimeDuration
 
 	unsigned long long t0;
 };
-struct TestValue
+
+struct EntityBase
 {
-	float crit;
+	int id;
+	int level;
 };
 
-MFJSON_ACCESSOR_VALUE_BEGIN(TestValue)
+struct MinMax
+{
+	int min;
+	int max;
+};
+struct MonsterAttr: public EntityBase
+{
+	float crit;
+	float critdam;
+	float dodge;
+	float gather_speed;
+	float hit;
+	int maxhp;
+	MinMax mdam;
+	int mdef;
+	MinMax pdam;
+	int pdef;
+	int run_away;
+	int speed;
+};
+
+MFJSON_ACCESSOR_VALUE_BEGIN(EntityBase)
+MFJSON_ACCESSOR_VALUE(id);
+MFJSON_ACCESSOR_VALUE(level);
+MFJSON_ACCESSOR_VALUE_END()
+
+MFJSON_ACCESSOR_VALUE_BEGIN(MinMax)
+MFJSON_ACCESSOR_VALUE(min);
+MFJSON_ACCESSOR_VALUE(max);
+MFJSON_ACCESSOR_VALUE_END()
+
+
+MFJSON_ACCESSOR_VALUE_BEGIN(MonsterAttr, EntityBase)
 MFJSON_ACCESSOR_VALUE(crit);
-MFJSON_ACCESSOR_VALUE_END();
+MFJSON_ACCESSOR_VALUE(critdam);
+MFJSON_ACCESSOR_VALUE(dodge);
+MFJSON_ACCESSOR_VALUE(gather_speed);
+MFJSON_ACCESSOR_VALUE(hit);
+MFJSON_ACCESSOR_VALUE(maxhp);
+MFJSON_ACCESSOR_VALUE(mdam);
+MFJSON_ACCESSOR_VALUE(mdef);
+MFJSON_ACCESSOR_VALUE(pdam);
+MFJSON_ACCESSOR_VALUE(pdef);
+MFJSON_ACCESSOR_VALUE(run_away);
+MFJSON_ACCESSOR_VALUE(speed);
+MFJSON_ACCESSOR_VALUE_END()
 
 int main()
 {
-	
+
 #ifdef WIN32
 	//::Sleep(2000);
 #endif
 	printf("test MFJSON  begin!\n");
 	auto jsonstr = read_file_bytes("monster_attr.json");
-
+	//speed test
 	{
 		using namespace rapidjson;
 		TimeDuration dt;
 		Document doc;
 		doc.Parse(jsonstr.c_str());
 		printf("rapidjson load ok! used:%lldus\n", dt.duration());
+
+		{
+			int maxhp;
+			TimeDuration dt;
+			for (int i = 0; i < 1000000; i++)
+			{
+				maxhp = doc["6100"][6]["maxhp"].GetInt();
+			}
+			printf("rapidjson read value 1000000 used:%lldus\n", dt.duration());
+
+		}
+
+
+
 	}
+
+	{
+		using namespace MFJSON;
+		Doc doc;
+		{
+			TimeDuration dt;
+
+			if (!doc.load(jsonstr.c_str()))
+			{
+				printf("%s\n", doc.errorDesc(jsonstr.c_str()).c_str());
+			}
+
+			printf("MFJSON load ok!    used:%lldus\n", dt.duration());
+
+		}
+		//doc.load(jsonstr.c_str());
+
+		{
+			int maxhp;
+			TimeDuration dt;
+
+			for (int i = 0; i < 1000000; i++)
+			{
+				maxhp = doc.root()["6100"][6]["maxhp"].getInt();
+			}
+			printf("MFJSON read value 1000000 used:%lldus\n", dt.duration());
+
+		}
+
+
+
+	}
+
+	//load c++ class
+	MonsterAttr testv;
 
 	{
 		using namespace MFJSON;
 		TimeDuration dt;
 		Doc doc;
 		//doc.load(jsonstr.c_str());
-		doc.load(jsonstr.c_str());
-
-
-		printf("MFJSON load ok!    used:%lldus\n", dt.duration());
-
-	}
-
-	{
-		using namespace MFJSON;
-		TimeDuration dt;
-		Doc doc;
-		//doc.load(jsonstr.c_str());
-		std::map<std::string, std::vector<TestValue>> datas;
+		std::map<std::string, std::vector<MonsterAttr>> datas;
 		doc.load(jsonstr.c_str(), datas);
 
-
-		printf("MFJSON load ok!    used:%lldus load:%d\n", dt.duration(), (int)datas.size());
+		testv = datas["6100"][6];
+		printf("MFJSON obj load ok!    used:%lldus load:%d\n", dt.duration(), (int)datas.size());
 
 	}
-
-	{
-		std::unordered_map<int,int> hashmap;
-		for(int i= 0; i< 100000; i++)
-		{
-			hashmap.insert(std::make_pair(i,i));
-		}
-
-		TimeDuration dt;
-
-		for (int i = 0; i < 100000; ++i)
-		{
-			hashmap.find(i);
-		}
-
-		printf("hashmap find used:%lldus\n", dt.duration());
-	}
+	//save c++ class
 	{
 
+		using namespace MFJSON;
+		Doc doc;
+
+		std::vector<MonsterAttr> values;
+		values.push_back(testv);
+		testv.level = 999;
+		values.push_back(testv);
+
+		doc.root().set(values);
+		std::string s = doc.dump(true);
+		printf("%s\n", s.c_str());
 	}
+
+	//save doc
+	{
+		using namespace MFJSON;
+		Doc doc;
+
+		doc.root().arrayBegin();
+
+		for (int i = 0; i < 2; i++)
+		{
+			 auto& element = doc.root().arrayPush();
+			 element.mapBegin();
+			 element.mapPush("id").set(i);
+			 element.mapPush("level").set(2);
+			 element.mapPush("name").set("haha");
+			 element.mapEnd();
+		}
+
+		doc.root().arrayEnd();
+	
+		std::string s = doc.dump(true);
+		printf("%s\n", s.c_str());
+
+	}
+
 
 
 	return 0;
