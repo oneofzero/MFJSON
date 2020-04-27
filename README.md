@@ -191,6 +191,9 @@ load 3.6MB json , vs2017 compile with /Ox
 access  json value 1000000 times
 
 rapidjson load ok! used:25379us
+
 rapidjson read value 1000000 used:1061692us
+
 MFJSON load ok!    used:11508us
+
 MFJSON read value 1000000 used:499141us
